@@ -8,6 +8,7 @@ In this article, the following topics will be touched upon:
 
 - Geometry Background
 - Basic OpenGL Transformations
+- Project Preparation
 - Camera Setup
 - Modeling Complex Objects
 - Animation
@@ -25,7 +26,7 @@ a =(5,3,4)~\\b=(9,1,2)
 $$
 `a` and `b` being points in space, their x-coordinates being 5 and 9 respectively, y-coordinates being 3 and 1 and so on.
 
-In computer graphics, more often than not, **homogeneous** coordinates are utilized instead of regular old **Cartesian coordinates**, they're basically the same thing, only with an additional utility parameter, which for the sake of simplicity we'll say is always 1. So if the regular coordinates of `a` are `(5,3,4)`,  the corresponding homogeneous coordinates would be `(5,3,4,1)`. There's a lot of geometric theory behind this, but it isn't really necessary for this article, if you're interested in the cold hard math theory. 
+In computer graphics, more often than not, **homogeneous** coordinates are utilized instead of regular old **Cartesian coordinates**, they're basically the same thing, only with an additional utility parameter, which for the sake of simplicity we'll say is always 1. So if the regular coordinates of `a` are `(5,3,4)`,  the corresponding homogeneous coordinates would be `(5,3,4,1)`. There's a lot of geometric theory behind this, but it isn't really necessary for this article, if you're interested in the cold hard math theory.
 
 Next, an essential tool for representing geometric transformations are **matrices**. A matrix i basically a two-dimensional array (in this case of size **n*****n**, it's very important for them to have the same number of rows and columns). Now, matrix operations are more often than not, pretty straightforward, like addition, subtraction etc. But of course the most important operation has to be the most complicated one, multiplication. Let's take a look at basic matrix operation examples:
 $$
@@ -108,7 +109,7 @@ Every single geometric transformation has it's own unique transformation matrix 
 
 1. Translation
 2. Scaling
-3. Reflexion
+3. Reflection
 4. Rotation
 5. Sheering
 
@@ -122,6 +123,28 @@ Translation can be described with the following matrix form:
 
 
 $$
+T=\begin{bmatrix}
+     1 & 0 & 0 & t_x\\
+     0 & 1 & 0 &t_y\\
+     0& 0 & 1 &t_z\\
+     0& 0 & 0 & 1\\
+\end{bmatrix}
+$$
+
+The `t`-s representing by how much the object's `x`,`y` and `z` location values will be changed.
+
+So, after we transform any coordinates with the translation matrix`T` we get:
+$$
+[x,y,z]*T=[t_x+x,t_y+y,t_z+z]
+$$
+
+
+#### Rotation
+
+Translation is the act of literally moving an object by a set vector, the object that's affected by the transformation doesn't change it's shape in any way, nor does it change it's orientation, it's just moved in space (that's why translation is classified as a **movement** transformation). 
+
+Translation can be described with the following matrix form:
+$$
 \begin{bmatrix}
      1 & 0 & 0 & t_x\\
      0 & 1 & 0 &t_y\\
@@ -129,6 +152,39 @@ $$
      0& 0 & 0 & 1\\
 \end{bmatrix}
 $$
- 
-
 The `t`-s representing by how much the object's `x`,`y` and `z` location values will be changed.
+
+#### Scaling
+
+Scaling is the act of multiplying any dimension of the target object by a **scalar**, this scalar can be `<1` if we want to shrink the object, and it can be `>1` if we want to enlarge the object.
+
+Scaling can be described with the following matrix form:
+$$
+S=\begin{bmatrix}
+     s_x & 0 & 0 & 0\\
+     0 & s_y & 0 &0\\
+     0& 0 & s_z &0\\
+     0& 0 & 0 & 1\\
+\end{bmatrix}
+$$
+`s_x`, `s_y`,`s_z` are the scalars that are multiplied with the `x`, `y` and `z` values of the target object. 
+
+After we transform any coordinates with the scaling matrix`S` we get:
+$$
+[x,y,z]*S=[s_x*x,s_y*y,s_z*z]
+$$
+
+#### Reflection
+
+Reflection or (in some cases) mirroring is the act of 
+
+Scaling can be described with the following matrix form:
+$$
+S=\begin{bmatrix}     s_x & 0 & 0 & 0\\     0 & s_y & 0 &0\\     0& 0 & s_z &0\\     0& 0 & 0 & 1\\\end{bmatrix}
+$$
+`s_x`, `s_y`,`s_z` are the scalars that are multiplied with the `x`, `y` and `z` values of the target object. 
+
+After we transform any coordinates with the scaling matrix`S` we get:
+$$
+[x,y,z]*S=[s_x*x,s_y*y,s_z*z]
+$$
