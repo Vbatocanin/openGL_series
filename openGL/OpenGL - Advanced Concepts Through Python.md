@@ -113,6 +113,8 @@ Every single geometric transformation has it's own unique transformation matrix 
 4. Rotation
 5. Sheering
 
+>I'll be explaining every single one of these transformations for the sake of fully comprehending what is going on behind the scenes in OpenGL. But if you so desire, you can skip to the implementations themselves.
+
 
 
 #### Translation
@@ -131,7 +133,7 @@ T=\begin{bmatrix}
 \end{bmatrix}
 $$
 
-The `t`-s representing by how much the object's `x`,`y` and `z` location values will be changed.
+The `t`-s represents by how much the object's `x`,`y` and `z` location values will be changed.
 
 So, after we transform any coordinates with the translation matrix`T` we get:
 $$
@@ -141,18 +143,67 @@ $$
 
 #### Rotation
 
-Translation is the act of literally moving an object by a set vector, the object that's affected by the transformation doesn't change it's shape in any way, nor does it change it's orientation, it's just moved in space (that's why translation is classified as a **movement** transformation). 
+Rotation is bit more complicated transformation, because of the simple fact it's dependent on 2 factors:
 
-Translation can be described with the following matrix form:
+1. Around what line  in 3D space(or point in 2D space) we'll be rotating
+2. By how much (in degrees or radians) we'll be rotating
+
+Because of this, we first need to define rotation in a 2D space, and for that we need a bit of trigonometry. 
+
+Here's a quick reference:
+
+![](C:\Users\vladimir\Desktop\OpenGL_AI\trougao_opengl.png)
+
+
+
+> These trigonometric functions can only be used inside a right-angled triangle (one of the angles has to be 90 degrees).
+
+The base rotation matrix for rotating an object in 2D space around the vertex (0,0) by the angle `A` goes as follows:
 $$
 \begin{bmatrix}
-     1 & 0 & 0 & t_x\\
-     0 & 1 & 0 &t_y\\
-     0& 0 & 1 &t_z\\
+     cosA & -sinA & 0\\
+     sinA & cosA  & 0\\
+     0 & 0  & 1\\
+    
+\end{bmatrix}
+$$
+
+
+> Again, the 3rd row and 3rd column are just in case we want to stack translation transformations on top of other transformations (which we will in OpenGL), it's ok if you don't fully grasp why they're there, things should clear up in the composite transformation example.
+
+
+
+This was all in 2D space, now let's move on to 3D space. In 3D space we need to define a matrix that can rotate an object around **any** line. As a wise man once said: `Keep it simple and stupid!` Fortunately, math magicians did for once keep it simple and stupid. 
+
+Every single rotation around a line can be broken down into 3 different transformations:
+
+1. Rotation around the x axis
+2. Rotation around the y axis
+3. Rotation around the z axis
+4. Utility translations (which will be touched upon later)
+
+So, the only three things we need to construct any 3D rotation are matrices that represent rotation around the `x`,`y` and `z` axis by an angle `A`:
+$$
+R_x=\begin{bmatrix}
+     1 & 0 & 0 & 0\\
+     0 & cosA & -sinA &0\\
+     0& sinA & cosA &0\\
+     0& 0 & 0 & 1\\
+\end{bmatrix}
+R_y=\begin{bmatrix}
+     cosA & 0 & sinA & 0\\
+     0 & 1 & 0 &0\\
+     -sinA& 0 & cosA &0\\
+     0& 0 & 0 & 1\\
+\end{bmatrix}
+R_z=\begin{bmatrix}
+     cosA & -sinA & 0 & 0\\
+     sinA & cosA & 0 &0\\
+     0& 0 & 1 &0\\
      0& 0 & 0 & 1\\
 \end{bmatrix}
 $$
-The `t`-s representing by how much the object's `x`,`y` and `z` location values will be changed.
+
 
 #### Scaling
 
@@ -174,17 +225,12 @@ $$
 [x,y,z]*S=[s_x*x,s_y*y,s_z*z]
 $$
 
-#### Reflection
-
-Reflection or (in some cases) mirroring is the act of 
-
-Scaling can be described with the following matrix form:
-$$
-S=\begin{bmatrix}     s_x & 0 & 0 & 0\\     0 & s_y & 0 &0\\     0& 0 & s_z &0\\     0& 0 & 0 & 1\\\end{bmatrix}
-$$
-`s_x`, `s_y`,`s_z` are the scalars that are multiplied with the `x`, `y` and `z` values of the target object. 
-
-After we transform any coordinates with the scaling matrix`S` we get:
+This transformation is particularly useful when scaling an object by factor `k` (this means the resulting object is two times bigger), this is achieve this by setting `s_x`=`s_y`=`s_z`=`k`.
 $$
 [x,y,z]*S=[s_x*x,s_y*y,s_z*z]
 $$
+
+A special case of scaling is known as `reflection`, and it's achieved by setting either `s_x`,`s_y` or `s_z` to `-1`. This just means we invert the sign of one of the object's coordinates, in simpler terms, we **put the object on the other side of the x,y or z axis**, this transformation can be modified to work for any plain of reflection, but we don't really need it for now.
+
+
+
