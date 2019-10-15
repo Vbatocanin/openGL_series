@@ -87,7 +87,7 @@ The last thing you need to know about matrix multiplication is that it has a **n
 $$
 (!\exists{E}\ \ \forall{A})\ E*A=A
 $$
-The exclamation point in conjunction with the exists symbol means: **A unique element E exits which...**
+> The exclamation point in conjunction with the exists symbol means: **A unique element E exists which...**
 
 In case of multiplication with normal integers, `E` has the value of `1`. In case of matrices, E has the following values in normal **Cartesian** (`E_1`) and **homogeneous coordinates** (`E_2`)  respectively:
 $$
@@ -233,4 +233,75 @@ $$
 A special case of scaling is known as `reflection`, and it's achieved by setting either `s_x`,`s_y` or `s_z` to `-1`. This just means we invert the sign of one of the object's coordinates, in simpler terms, we **put the object on the other side of the x,y or z axis**, this transformation can be modified to work for any plain of reflection, but we don't really need it for now.
 
 
+
+#### Composite Transformations
+
+Composite transformations are transformations which consist of more than 1 basic transformations (the ones listed above). Transformations `A` and `B` are combined by matrix multiplying the corresponding transformation matrices  `M_a` and `M_b`. 
+
+This may seem like very straightforward logic, however there are some things that can be confusing. For example:
+
+1. **Matrix multiplication is not commutable** , which means:
+   $$
+   A*B\neq B*A ~\\ \text{A and B being matrices}
+   $$
+
+2. Every single one of these transformations has an inverse transformation. An inverse transformation is a transformation that cancels out the original one. For example:
+
+	$$
+	T=\begin{bmatrix}
+     1 & 0 & 0 &a\\
+     0 & 1 & 0 &b\\
+     0 & 0 & 1 &c\\
+     0 & 0 & 0 &1\\
+	\end{bmatrix}
+	T^{-1}=\begin{bmatrix}
+	  1 & 0 & 0 &-a\\
+	  0 & 1 & 0 &-b\\
+	  0 & 0 & 1 &-c\\
+	  0 & 0 & 0 &1\\
+	\end{bmatrix}
+	E=\begin{bmatrix}
+	  1 & 0 & 0 &0\\
+	  0 & 1 & 0 &0\\
+	  0 & 0 & 1 &0\\
+	  0 & 0 & 0 &1\\
+	\end{bmatrix}
+	~\\ ~\\T*T^{-1}=E
+	$$
+
+3. When we want to make an inverse of a composite transformation, we have to change the order of elements utilized. 
+   $$
+   (A*B*C)^{-1} = C^{-1}*B^{-1}*A^{-1}
+   $$
+   
+>You can look at it like this. The topological order of matrix utilization is very important, just like ascending to a certain floor of a building. If you're on the first floor, and you want to get to the fourth floor, first you need to go to the third floor and then to the fourth. But if you want to descend BACK to the second floor, you would then have to go to the third floor and then to the second floor (in reverse topological order).
+
+
+
+#### Transformations That Involve a Referral Point
+
+As previously mentioned, when a transformation has to be done relative to a specific point in space, for example rotating around a referral point `A=(a,b,c)` in 3D space, not the origin `O = (0,0,0)`, we need to turn that referral point `A` into `O` by translating everything by `T(-a,-b,-c)`. Then we can do any transformation we need to do, and when we're done, translate everything back by `T(a,b,c)`, so that the original origin `O` again has the coordinates `(0,0,0)`. 
+
+The matrix form of this example is:
+
+$$
+T*M*T^{-1}=\begin{bmatrix}
+     1 & 0 & 0 & -a\\
+     0 & 1 & 0 &-b\\
+     0& 0 & 1 &-c\\
+     0& 0 & 0 & 1\\
+\end{bmatrix} 
+*M*
+\begin{bmatrix}
+     1 & 0 & 0 & a\\
+     0 & 1 & 0 & b\\
+     0& 0 & 1 & c\\
+     0& 0 & 0 & 1\\
+\end{bmatrix}
+$$
+Where `M` is the transformation we wish to do on an object.
+
+
+
+#### Implementation in OpenGL
 
