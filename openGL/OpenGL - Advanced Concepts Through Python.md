@@ -2,15 +2,15 @@
 
 ### Introduction
 
-Following the well-written article by [Muhammad Junaid Khalid](https://stackabuse.com/brief-introduction-to-opengl-in-python-with-pyopengl/) , where basic OpenGL concepts and setup was explained, now we'll be looking at how to make more **complex** objects and how to **animate** them.
+Following the article by [Muhammad Junaid Khalid](https://stackabuse.com/brief-introduction-to-opengl-in-python-with-pyopengl/) , where basic OpenGL concepts and setup was explained, now we'll be looking at how to make more **complex** objects and how to **animate** them.
 
 In this article, the following topics will be touched upon:
 
-- Geometry Background
-- Basic OpenGL Transformations
-- Project Preparation
-- Camera Setup
+- OpenGL Geometry Background
+- Drawing Objects
+- Manipulating Objects
 - Modeling Complex Objects
+- Setup
 - Animation
 - Conclusion
 
@@ -105,6 +105,7 @@ E_2=\begin{bmatrix}
 $$
 
 
+
 Every single geometric transformation has it's own unique transformation matrix that has a pattern of some sort, of which the most important are:
 
 1. Translation
@@ -113,7 +114,9 @@ Every single geometric transformation has it's own unique transformation matrix 
 4. Rotation
 5. Sheering
 
->I'll be explaining every single one of these transformations for the sake of fully comprehending what is going on behind the scenes in OpenGL. But if you so desire, you can skip to the implementations themselves.
+
+
+>I'll be explaining every single one of these transformations for the purpose of fully comprehending what is going on behind the scenes in OpenGL. But if you so desire, you can skip to the implementation itself.
 
 
 
@@ -139,6 +142,25 @@ So, after we transform any coordinates with the translation matrix`T` we get:
 $$
 [x,y,z]*T=[t_x+x,t_y+y,t_z+z]
 $$
+
+Translation is implemented with the following OpenGL function:
+
+```python
+void glTranslatef(GLfloat tx,GLfloat ty,GLfloat tz);
+```
+
+As you can see, if we know the form of the Translation matrix, understanding the OpenGL function is very straightforward, this is the case with all OpenGL transformations.
+
+> Don't mind the GLfloat is just a clever method for OpenGL to work on multiple platforms, you can look at it like this:
+>
+> ```C
+> typedef float GLfloat;
+> typedef double GLdouble;
+> typedef someType GLsomeType;
+> ```
+>
+> This is a necessary measure because not all systems have the same storage space for a `Char` for example.
+
 
 
 #### Rotation
@@ -205,6 +227,16 @@ R_z=\begin{bmatrix}
 $$
 
 
+
+3D rotation is implemented with the following OpenGL function:
+
+```python
+void glRotatef(GLfloat angle,GLfloat x,GLfloat y,GLfloat z);
+```
+
+- `angle` angle of rotation in degrees (0-360)
+- `x,y,z` - vector around which the rotation is executed
+
 #### Scaling
 
 Scaling is the act of multiplying any dimension of the target object by a **scalar**, this scalar can be `<1` if we want to shrink the object, and it can be `>1` if we want to enlarge the object.
@@ -231,6 +263,10 @@ $$
 $$
 
 A special case of scaling is known as `reflection`, and it's achieved by setting either `s_x`,`s_y` or `s_z` to `-1`. This just means we invert the sign of one of the object's coordinates, in simpler terms, we **put the object on the other side of the x,y or z axis**, this transformation can be modified to work for any plain of reflection, but we don't really need it for now.
+
+```
+void glScalef(GLfloat sx,GLfloat sy,GLfloat sz);
+```
 
 
 
@@ -303,5 +339,5 @@ Where `M` is the transformation we wish to do on an object.
 
 
 
-#### Implementation in OpenGL
+### Drawing Objects
 
