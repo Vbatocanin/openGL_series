@@ -4,19 +4,22 @@
 
 Following the article by [Muhammad Junaid Khalid](https://stackabuse.com/brief-introduction-to-opengl-in-python-with-pyopengl/) , where basic OpenGL concepts and setup was explained, now we'll be looking at how to make more **complex** objects and how to **animate** them.
 
+OpenGL is very old, and you won't find many tutorials online on how to properly use it and understand it because all the top dogs are already knee-deep in new technologies. To understand modern OpenGL code, you have to first fully understand the bare-bones **ancient** concepts that were written on stone tablets by the wise Mayan game developers.
+
 In this article, the following topics will be touched upon:
 
-- OpenGL Geometry Background
-- Drawing Objects
-- Manipulating Objects
-- Modeling Complex Objects
-- Setup
-- Animation
-- Conclusion
+- [Basic Matrix Operations](#basicmatrixoperations)
+- [Composite Transformations](#compositetransformations)
+- [Transformations That Involve a Referral Point](#transformationsthatinvolveareferralpoint)
+- [Initializing a Project Using PyGame](#initializingaprojectusingpygame)
+- [Drawing Objects](#drawingobjects)
+- [Iterative Animation](#iterativeanimation)
+- [Implementation Example](#implementationexample)
+- [Conclusion](#conclusion)
 
 
 
-### Geometry Background
+### Basic Matrix Operations 
 
 To understand what's happening with all these glTranslate's and whatnot, we'll first need to learn a little bit of geometry.
 
@@ -270,7 +273,7 @@ void glScalef(GLfloat sx,GLfloat sy,GLfloat sz);
 
 
 
-#### Composite Transformations
+### Composite Transformations
 
 Composite transformations are transformations which consist of more than 1 basic transformations (the ones listed above). Transformations `A` and `B` are combined by matrix multiplying the corresponding transformation matrices  `M_a` and `M_b`. 
 
@@ -314,7 +317,7 @@ This may seem like very straightforward logic, however there are some things tha
 
 
 
-#### Transformations That Involve a Referral Point
+### Transformations That Involve a Referral Point
 
 As previously mentioned, when a transformation has to be done relative to a specific point in space, for example rotating around a referral point `A=(a,b,c)` in 3D space, not the origin `O = (0,0,0)`, we need to turn that referral point `A` into `O` by translating everything by `T(-a,-b,-c)`. Then we can do any transformation we need to do, and when we're done, translate everything back by `T(a,b,c)`, so that the original origin `O` again has the coordinates `(0,0,0)`. 
 
@@ -337,7 +340,259 @@ T*M*T^{-1}=\begin{bmatrix}
 $$
 Where `M` is the transformation we wish to do on an object.
 
+The whole point to learning these matrix operations is so that you can fully understand how OpenGL works, more on that later.
 
+### Initializing a Project Using PyGame
+
+Finally, some actual code! 
+
+Because I don't want to unload 3 books worth of Graphics theory on you, we'll be using the PyGame library. It will essentially just shorten the process from project initialization to actual modeling and animating.
+
+To start off, we need to import everything necessary from both OpenGL and PyGame:
+
+```python
+import pygame as pg
+from pygame.locals import *
+
+from OpenGL.GL import *
+from OpenGL.GLU import *
+```
+
+
+
+Next, we get to the initialization:
+
+```python
+pg.init() # initialization of all the pygame modules - this function is a godsend
+windowSize = (1920,1080) # we define a fixed window size (4K is necessary of course)
+pg.display.set_mode(display, DOUBLEBUF|OPENGL) # with this command we are specifying that we'll be using opengl with double buffering
+# double buffering means that there are 2 images at any given time, one that we can see and one that we can transform as we see fit, we get to see the actual change caused by the transformations when the two buffers swap
+```
+
+
+
+Since we have our viewport set up, next we need to specify what we'll be seeing, or rather where the **camera** will be placed, and how far and wide it can see. This is know as the **frustum**, which is just a cut off pyramid that visually represents the camera's sight (what it can and can't see). Y'all gamers are probably very familiar with most of these terms, a **frustum** is defined by 4 key parameters:
+
+1. The FOV (field of view) angle in degrees
+2. The Aspect Ratio - which is defined as the ratio of the width and height
+3. The z coordinate of the near Clipping Plane, which is the **minimum draw distance**
+4. The z coordinate of the far Clipping Plane, which is the **maximum draw distance** 
+
+The function itself and our implementation go as follows:
+
+```c
+void gluPerspective( GLdouble fovy,GLdouble aspect,GLdouble zNear,GLdouble zFar);
+gluPerspective(60, (display[0]/display[1]), 0.1, 100.0)
+```
+
+To better understand how a frustum works, here's a reference picture:
+
+![](C:\Users\vladimir\Desktop\OpenGL_AI\1200px-ViewFrustum.svg.png)
+
+
+
+Near and far planes are used for better performance. Realistically, rendering anything outside our field of vision is a waste of hardware performance that could be used rendering something that we can actually see. So everything that the player can't see is implicitly stored in memory, even though it isn't visually present. If you still don't get how a frustum works, check out [this video](https://www.youtube.com/watch?v=VqH8kcmD-HI).
 
 ### Drawing Objects
 
+After all this setup, I imagine we're asking ourselves the same question:
+
+> Well this is all fine and dandy, but how do I make a Super Star Destroyer?
+
+Well... **WITH DOTS**. Every model in OpenGL object is stored as a set of vertices and a set of their relations (which vertices are connected). So theoretically if you knew the position of every single dot that is used to draw a Super Star Destroyer, you could very well draw one!
+
+There are a few ways we can model objects in OpenGL:
+
+1. Drawing using vertices, and depending on how OpenGL interprets these vertices, we can draw with:
+   - **points** (as in literal points that are not connected in any way)
+   - **lines** (every pair of vertices constructs a connected line)
+   - **triangles** (every 3 vertices make a triangle)
+   - **quadrilateral** (every 4 vertices make a *mythical mathematical object of awesome power*, also known as a quadrilateral)
+   - **polygon** 
+   - **many more**
+2. Drawing using the built in shapes and objects that were painstakingly modeled by OpenGL wizards
+3. Importing fully modeled objects
+
+So, to draw a cube for example, we first need to define it's vertices:
+
+```python
+cubeVertices = ((1,1,1),(1,1,-1),(1,-1,-1),(1, -1, 1),(-1,1,1),(-1,-1,-1),(-1,-1,1),(-1, 1, -1))
+```
+
+![](D:\StackAbuse\openGL_series\openGL\Cube.png)
+
+
+
+Then, we need to define how they're all connected. If we want to make a wire cube, we need to define the cube's edges:
+
+```python
+cubeEdges = ((0,1),(0,3),(0,4),(1,2),(1,7),(2,5),(2,3),(3,6),(4,6),(4,7),(5,6),(5,7))
+```
+
+
+
+And if we want to make a solid cube, then we need to define the cube's quadrilaterals:
+
+```python
+cubeQuads = ((0,3,6,4),(2,5,6,3),(1,2,5,7),(1,0,4,7),(7,4,6,5),(2,3,0,1))
+```
+
+
+
+> Keep in mind there's an actual reason we label the vertices as indexes of the array they're defined in. This makes writing code that connects them very easy.
+
+
+
+The following function is used to draw a wired cube:
+
+```python
+def wireCube():
+    glBegin(GL_LINES)
+    for cubeEdge in cubeEdges:
+        for cubeVertex in cubeEdge:
+            glVertex3fv(cubeVertices[cubeVertex])
+    glEnd()
+```
+
+`glBegin()` is a function that indicates we'll defining the vertices of a primitive in the code below. When we're done defining the primitive, we use the function `glEnd()`.
+
+`GL_LINES` is a macro that indicates we'll be drawing lines.
+
+`glVertex3fv`() - is a function that defines a vertex in space, there are a few versions of this function, so for the sake of clarity let's look at how the name is constructed:
+
+- `glVertex` - a function that defines a vertex
+- `glVertex3` - a function that defines a vertex using 3 coordinates
+- `glVertex3f` - a function that defines a vertex using 3 coordinates of type GLfloat
+- `glVertex3fv` - a function that defines a vertex using 3 coordinates of type GLfloat which are put inside a vector (tuple) (the alternative would be `glVertex3fl` which uses a list of arguments instead of a vector)
+
+
+
+Following similar logic, the following function is used to draw a solid cube:
+
+```python
+def solidCube():
+    glBegin(GL_QUADS)
+    for cubeQuad in cubeQuads:
+        for cubeVertex in cubeQuad:
+            glVertex3fv(cubeVertices[cubeVertex])
+    glEnd()
+```
+
+
+
+### Iterative Animation
+
+For our program to be **killable** we need to insert the following code snippet:
+
+```python
+for event in pg.event.get():
+	if event.type == pg.QUIT:
+        pg.quit()
+        quit()
+```
+
+It's basically just a listener that scrolls through PyGame's events, and if it detects that we clicked kill window button, it quits the application. More on PyGame events in the following articles (I had to introduce this one right away because it would be quite uncomfortable for users and yourselves to have to fire up the task manager every time they want to quit the application).
+
+
+
+In this example we'll be using double buffering, which just means that we'll be using two buffers (you can think of them as canvases for drawing) which will swap in fixed intervals and give the illusion of motion. Knowing this our code has to have the following pattern:
+
+```python
+handleEvents()
+glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
+doTransformationsAndDrawing()
+pg.display.flip()
+pg.time.wait(1)
+```
+
+- `glClear` - a function that clears the specified buffers (canvases), in this case the color buffer (which contains color information for drawing the generated objects) and depth buffer (a buffer which stores in-front-of or in-back-of relations of all the generated objects). 
+
+- `pg.display.flip()` - a function that updated the window with the active buffer contents
+
+- `pg.time.wait(1)` - a function that pauses the program for a period of time
+
+`glClear` has to be used because if we don't use it, we'll be just painting over an already painted canvas, which in this case is our screen.
+
+Next, if we want to **continuously update our screen**, just like an animation, we have to put all our code inside a `while` loop in which we:
+
+1. Handle events (in this case just quitting)
+2. Clear the color and depth buffers co that they can be `drawn on` again
+3. Transform and draw objects
+4. Update the screen
+5. GOTO 1.
+
+The code ought to look something like this:
+
+```python
+while True:
+    handleEvents()
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
+    doTransformationsAndDrawing()
+    pg.display.flip()
+    pg.time.wait(1)
+```
+
+
+
+### Implementation Example
+
+The code below draws a solid cube on the screen and continuously rotates it by 1 degree around the (1,1,1) vector. And it can be very easily modified to draw a wire cube.
+
+```python
+import pygame as pg
+from pygame.locals import *
+
+from OpenGL.GL import *
+from OpenGL.GLU import *
+
+cubeVertices = ((1,1,1),(1,1,-1),(1,-1,-1),(1, -1, 1),(-1,1,1),(-1,-1,-1),(-1,-1,1),(-1, 1, -1))
+cubeEdges = ((0,1),(0,3),(0,4),(1,2),(1,7),(2,5),(2,3),(3,6),(4,6),(4,7),(5,6),(5,7))
+cubeQuads = ((0,3,6,4),(2,5,6,3),(1,2,5,7),(1,0,4,7),(7,4,6,5),(2,3,0,1))
+
+
+def wireCube():
+    glBegin(GL_LINES)
+    for cubeEdge in cubeEdges:
+        for cubeVertex in cubeEdge:
+            glVertex3fv(cubeVertices[cubeVertex])
+    glEnd()
+def solidCube():
+    glBegin(GL_QUADS)
+    for cubeQuad in cubeQuads:
+        for cubeVertex in cubeQuad:
+            glVertex3fv(cubeVertices[cubeVertex])
+    glEnd()
+
+def main():
+    pg.init()
+    display = (1680,1050)
+    pg.display.set_mode(display, DOUBLEBUF|OPENGL)
+
+    gluPerspective(45, (display[0]/display[1]), 0.1, 50.0)
+
+    glTranslatef(0.0,0.0, -5)
+
+    while True:
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                pg.quit()
+                quit()
+
+        glRotatef(1, 1, 1, 1)
+        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
+        solidCube()
+        #wireCube()
+        pg.display.flip()
+        pg.time.wait(10)
+   
+if __name__ == "__main__":
+    main()
+```
+
+
+
+### Conclusion
+
+There is a **LOT** more to learn about OpenGL, like lighting, textures, advanced surface modeling, composite modular animation and much more. But fret not, all of this will be explained in the following articles. I'm here to teach the public about OpenGL the proper way, from the ground up. 
+
+And don't worry, in the article we'll actually draw something semi decent.
