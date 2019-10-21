@@ -1,4 +1,4 @@
-## OpenGL - Advanced Concepts Through Python
+## OpenGL - Concepts Through Python
 
 ### Introduction
 
@@ -344,7 +344,15 @@ The whole point to learning these matrix operations is so that you can fully und
 
 ### Initializing a Project Using PyGame
 
-Finally, some actual code! 
+First off, we need to install PyGame using pip. To do so run the following command:
+
+```bash
+python3 -m pip install -U pygame --user
+```
+
+If you have problems concerning the installation, go to this [webpage]( https://www.pygame.org/wiki/GettingStarted ).
+
+Now finally, some actual code! 
 
 Because I don't want to unload 3 books worth of Graphics theory on you, we'll be using the PyGame library. It will essentially just shorten the process from project initialization to actual modeling and animating.
 
