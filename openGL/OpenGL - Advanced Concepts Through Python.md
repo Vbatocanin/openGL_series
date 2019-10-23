@@ -14,6 +14,7 @@ In this article, the following topics will be touched upon:
 - [Initializing a Project Using PyGame](#initializingaprojectusingpygame)
 - [Drawing Objects](#drawingobjects)
 - [Iterative Animation](#iterativeanimation)
+- [Complex Transformations - Utilization of Tranformation Matrix](#complextransformationsutilizationoftranformationmatrix)
 - [Implementation Example](#implementationexample)
 - [Conclusion](#conclusion)
 
@@ -541,6 +542,55 @@ while True:
 ```
 
 
+
+### Complex Transformations - Utilization of Tranformation Matrices
+
+In the last article, we explained how in theory we need to construct a transformation that has a referral point. Well, OpenGL works the same way, as can be seen in the following code:
+
+```python
+glTranslatef(1,1,1)
+glRotatef(30,0,0,1)
+glTranslatef(-1,-1,-1)
+```
+
+In this example, we did a `z-axis` rotation in the `xy-plane` with the **center of rotation** being `(1,1,1)` by 30 degrees, if you asking yourself what in the name of god are all these terms, let's have a little refresher:
+
+1. `z-axis` rotation means that we're rotating around the z-axis
+
+   > In math terms, this just means we're approximating a 2D plane with a 3D space, this whole transformation is basically like doing a normal rotation around a referral point in 2D space.
+
+2. We get  the `xy-plane` by squashing an entire 3D space into a plane that has `z=0` (we eliminate the z parameter in every way)
+3.  Center of rotation is a vertex around which we will be rotating a given object (the default center of rotation is the origin vertex (0,0,0))
+
+
+
+This is all fine and dandy, however, OpenGL understands the code above by constantly remembering and modifying one transformation matrix. So when you write something in OpenGL, what you're saying is this:
+
+```python
+# This part of the code is not translated
+	# transformation matrix = E (neutral)
+glTranslatef(1,1,1) 
+	# transformation matrix = TxE
+# ALL OBJECTS FROM NOW ON ARE TRANSLATED BY (1,1,1)
+```
+
+As you might imagine, this poses a huge problem, because sometimes we we want to utilize a transformation on a single object, not on the whole source code. This is a very common reason for bugs in low level OpenGL.
+
+Because people like you and me cried so often about this problematic feature of OpenGL, the gods of OpenGL descended from the heavens and granted us the gift of pushing and popping transformation matrices as we so desire(`glPushMatrix()` and `glPopMatrix()`).
+
+```python
+# Transformation matrix is T1 before this block of code
+glPushMatrix()
+# This duplicates the transformation matrix T1 up until this point and pushes it to the top of the stack of transformation matrices
+# In other words it ISOLATES all the transformations we'll be doing in this block by creating a local matrix which we can scrap after we're done with it
+	glTranslatef(1,0,0)
+    generateObject() # This object is translated
+glPopMatrix()
+# This just pops the top transformation matrix from the stack, which in this case is the matrix which we need to scrap, and the matrix under it is the untouched matrix T1
+generateSecondObject() # This object isn't translated
+```
+
+>Note that the indentation between the push and pop functions isn't necessary, but is good practice to do it for the sake of more readable code.
 
 ### Implementation Example
 
