@@ -15,6 +15,7 @@ In this article, the following topics will be touched upon:
 - [Drawing Objects](#drawingobjects)
 - [Iterative Animation](#iterativeanimation)
 - [Complex Transformations - Utilization of Tranformation Matrix](#complextransformationsutilizationoftranformationmatrix)
+- [Multiple Transformation Execution](#multipletransformationexecution)
 - [Implementation Example](#implementationexample)
 - [Conclusion](#conclusion)
 
@@ -591,6 +592,26 @@ generateSecondObject() # This object isn't translated
 ```
 
 >Note that the indentation between the push and pop functions isn't necessary, but is good practice to do it for the sake of more readable code.
+
+### Multiple Transformation Execution
+
+In OpenGL, as previously mentioned, transformations are added to the active transformation matrix that's on top of stack of transformation matrices. This means that the transformations are executed in reverse order. For example:
+
+```python
+######### First example ##########
+glTranslatef(-1,0,0)
+glRotatef(30,0,0,1)
+drawObject1()
+##################################
+
+######## Second Example #########
+glRotatef(30,0,0,1)
+glTranslatef(-1,0,0)
+drawObject2()
+#################################
+```
+
+In this example, `Object1` is first rotated, then translated, and `Object2` is first translated, then rotated. The last two concepts won't be used in the implementation example, but will be practically used in the next article in the series.
 
 ### Implementation Example
 
